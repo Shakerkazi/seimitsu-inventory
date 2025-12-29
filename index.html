@@ -69,7 +69,8 @@ footer {
   <label>Search SKU-Item Code</label>
   <input id="search" placeholder="Enter SKU" onkeyup="searchPart()">
 
-  <div id="result"></div>
+  <div id="status">Loading inventory…</div>
+<div id="result"></div>
 
   <div class="card">
     <h3>Add / Update Part</h3>
@@ -90,30 +91,50 @@ footer {
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbxaCRMPIJTeyArUGJfcyk4PJCJMgnFORd6Xy0G3TkVwwrkdGjXefEYjMtur3WakKsq5/exec";
 let inventory = [];
+let dataLoaded = false;
 
-fetch(API_URL)
-  .then(res => res.json())
-  .then(data => inventory = data);
+const statusDiv = document.getElementById("status");
+const resultDiv = document.getElementById("result");
+
+function loadInventory() {
+  statusDiv.innerText = "Loading inventory…";
+
+  fetch(API_URL)
+    .then(res => res.json())
+    .then(data => {
+      inventory = data || [];
+      dataLoaded = true;
+      statusDiv.innerText = `Inventory loaded (${inventory.length} parts)`;
+    })
+    .catch(err => {
+      statusDiv.innerText = "Error loading inventory";
+      console.error(err);
+    });
+}
+
+loadInventory();
 
 function searchPart() {
-  const val = document.getElementById("search").value.trim().toUpperCase();
-  const res = document.getElementById("result");
-
-  if (val.length === 0) {
-    res.innerHTML = "";
+  if (!dataLoaded) {
+    statusDiv.innerText = "Please wait, inventory still loading…";
     return;
   }
+
+  const val = document.getElementById("search").value.trim().toUpperCase();
+  resultDiv.innerHTML = "";
+
+  if (val.length < 2) return;
 
   const matches = inventory.filter(p =>
     p.sku && p.sku.toUpperCase().includes(val)
   );
 
   if (matches.length === 0) {
-    res.innerHTML = "<p>No part found</p>";
+    resultDiv.innerHTML = "<p>No part found</p>";
     return;
   }
 
-  res.innerHTML = matches.slice(0, 20).map(part => `
+  resultDiv.innerHTML = matches.slice(0, 20).map(part => `
     <div class="card">
       <b>SKU:</b> ${part.sku}<br>
       <b>Quantity:</b> ${part.qty}<br>
@@ -123,10 +144,15 @@ function searchPart() {
 }
 
 function updatePart() {
-  const sku = document.getElementById("sku").value;
-  const qty = document.getElementById("qty").value;
-  const loc = document.getElementById("loc").value;
+  const sku = document.getElementById("sku").value.trim();
+  const qty = Number(document.getElementById("qty").value);
+  const loc = document.getElementById("loc").value.trim();
   const operator = document.getElementById("operator").value;
+
+  if (!sku || isNaN(qty)) {
+    alert("SKU and Quantity are required");
+    return;
+  }
 
   fetch(API_URL, {
     method: "POST",
@@ -141,11 +167,12 @@ function updatePart() {
   .then(r => r.json())
   .then(res => {
     alert(res.success ? "Updated successfully" : res.error);
-    location.reload();
+    loadInventory(); // refresh data
   });
 }
 </script>
 
 </body>
 </html>
+
 
