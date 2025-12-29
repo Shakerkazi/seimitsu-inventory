@@ -96,22 +96,30 @@ fetch(API_URL)
   .then(data => inventory = data);
 
 function searchPart() {
-  const val = document.getElementById("search").value.toUpperCase();
-  const part = inventory.find(p => p.sku.toUpperCase() === val);
-
+  const val = document.getElementById("search").value.trim().toUpperCase();
   const res = document.getElementById("result");
-  if (!part) {
+
+  if (val.length === 0) {
+    res.innerHTML = "";
+    return;
+  }
+
+  const matches = inventory.filter(p =>
+    p.sku && p.sku.toUpperCase().includes(val)
+  );
+
+  if (matches.length === 0) {
     res.innerHTML = "<p>No part found</p>";
     return;
   }
 
-  res.innerHTML = `
+  res.innerHTML = matches.slice(0, 20).map(part => `
     <div class="card">
       <b>SKU:</b> ${part.sku}<br>
       <b>Quantity:</b> ${part.qty}<br>
       <b>Location:</b> ${part.loc}
     </div>
-  `;
+  `).join("");
 }
 
 function updatePart() {
@@ -140,3 +148,4 @@ function updatePart() {
 
 </body>
 </html>
+
