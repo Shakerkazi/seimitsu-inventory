@@ -119,6 +119,8 @@ function loadInventory() {
 loadInventory();
 
 function searchPart() {
+  const resultsDiv = document.getElementById("results");
+
   if (!dataLoaded) {
     statusDiv.innerText = "Please wait, inventory still loading…";
     return;
@@ -206,6 +208,7 @@ function updatePart() {
 
 </body>
 </html>
+
 
 
 
