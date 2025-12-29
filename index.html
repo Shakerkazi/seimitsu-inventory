@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEIMITSU Inventory</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #f4f6f8;
+}
+header {
+  background: #0b3c5d;
+  color: white;
+  padding: 12px;
+  text-align: center;
+}
+.container {
+  padding: 15px;
+}
+input, select, button {
+  width: 100%;
+  padding: 10px;
+  margin: 6px 0;
+  font-size: 16px;
+}
+button {
+  background: #0b3c5d;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+button:active {
+  background: #092f48;
+}
+.card {
+  background: white;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 6px;
+}
+footer {
+  text-align: center;
+  font-size: 13px;
+  color: #555;
+  margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h2>SEIMITSU Factory Automation Pvt. Ltd.</h2>
+  <p>Inventory Management</p>
+</header>
+
+<div class="container">
+
+  <label>Operator</label>
+  <select id="operator">
+    <option>A</option>
+    <option>B</option>
+    <option>C</option>
+  </select>
+
+  <label>Search SKU-Item Code</label>
+  <input id="search" placeholder="Enter SKU" onkeyup="searchPart()">
+
+  <div id="result"></div>
+
+  <div class="card">
+    <h3>Add / Update Part</h3>
+
+    <input id="sku" placeholder="SKU-Item Code">
+    <input id="qty" type="number" placeholder="Quantity (+ / -)">
+    <input id="loc" placeholder="Location">
+
+    <button onclick="updatePart()">Save</button>
+  </div>
+
+</div>
+
+<footer>
+  Developed by <b>Shaker Kazi</b>
+</footer>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbxaCRMPIJTeyArUGJfcyk4PJCJMgnFORd6Xy0G3TkVwwrkdGjXefEYjMtur3WakKsq5/exec";
+let inventory = [];
+
+fetch(API_URL)
+  .then(res => res.json())
+  .then(data => inventory = data);
+
+function searchPart() {
+  const val = document.getElementById("search").value.toUpperCase();
+  const part = inventory.find(p => p.sku.toUpperCase() === val);
+
+  const res = document.getElementById("result");
+  if (!part) {
+    res.innerHTML = "<p>No part found</p>";
+    return;
+  }
+
+  res.innerHTML = `
+    <div class="card">
+      <b>SKU:</b> ${part.sku}<br>
+      <b>Quantity:</b> ${part.qty}<br>
+      <b>Location:</b> ${part.loc}
+    </div>
+  `;
+}
+
+function updatePart() {
+  const sku = document.getElementById("sku").value;
+  const qty = document.getElementById("qty").value;
+  const loc = document.getElementById("loc").value;
+  const operator = document.getElementById("operator").value;
+
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "update",
+      sku: sku,
+      delta: qty,
+      loc: loc,
+      operator: operator
+    })
+  })
+  .then(r => r.json())
+  .then(res => {
+    alert(res.success ? "Updated successfully" : res.error);
+    location.reload();
+  });
+}
+</script>
+
+</body>
+</html>
