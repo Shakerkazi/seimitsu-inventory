@@ -138,13 +138,22 @@ function searchPart() {
     return;
   }
 
-  resultDiv.innerHTML = matches.slice(0, 20).map(part => `
-    <div class="card">
-      <b>SKU:</b> ${part.sku}<br>
-      <b>Quantity:</b> ${part.qty}<br>
-      <b>Location:</b> ${part.loc}
-    </div>
-  `).join("");
+  resultsDiv.innerHTML = results.map((p, i) => `
+  <div class="card">
+    <b>SKU:</b> ${p.sku}<br><br>
+
+    <b>Quantity:</b>
+    <input type="number" id="qty-${i}" value="${p.qty}" style="width:80px"><br><br>
+
+    <b>Location:</b>
+    <input type="text" id="loc-${i}" value="${p.loc}" style="width:120px"><br><br>
+
+    <button onclick="savePart('${p.sku}', ${i})">
+      Save
+    </button>
+  </div>
+`).join("");
+
 }
 
 function updatePart() {
@@ -174,10 +183,30 @@ function updatePart() {
     loadInventory(); // refresh data
   });
 }
+  function savePart(sku, i) {
+  const qty = document.getElementById(`qty-${i}`).value;
+  const loc = document.getElementById(`loc-${i}`).value;
+
+  fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sku: sku,
+      qty: qty,
+      loc: loc,
+      operator: "A"
+    })
+  })
+  .then(res => res.json())
+  .then(() => alert("Updated successfully"))
+  .catch(() => alert("Update failed"));
+}
+
 </script>
 
 </body>
 </html>
+
 
 
 
