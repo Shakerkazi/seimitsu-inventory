@@ -102,7 +102,11 @@ function loadInventory() {
   fetch(API_URL)
     .then(res => res.json())
     .then(data => {
-      inventory = data || [];
+      inventory = (data || []).map(p => ({
+  ...p,
+  sku: p.sku ? p.sku.toString().trim().toUpperCase() : ""
+}));
+
       dataLoaded = true;
       statusDiv.innerText = `Inventory loaded (${inventory.length} parts)`;
     })
@@ -174,5 +178,6 @@ function updatePart() {
 
 </body>
 </html>
+
 
 
