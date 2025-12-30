@@ -70,14 +70,14 @@ footer {
   <input id="search" placeholder="Enter SKU" onkeyup="searchPart()">
 
   <div id="status">Loading inventory…</div>
-<div id="result"></div>
+  <div id="results"></div>
 
   <div class="card">
     <h3>Add / Update Part</h3>
 
-    <input id="sku" placeholder="SKU-Item Code">
-    <input id="qty" type="number" placeholder="Quantity (+ / -)">
-    <input id="loc" placeholder="Location">
+    <input id="newSku" placeholder="SKU-Item Code">
+    <input id="newQty" type="number" placeholder="Quantity (+ / -)">
+    <input id="newLoc" placeholder="Location">
 
     <button onclick="updatePart()">Save</button>
   </div>
@@ -90,11 +90,12 @@ footer {
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbxaCRMPIJTeyArUGJfcyk4PJCJMgnFORd6Xy0G3TkVwwrkdGjXefEYjMtur3WakKsq5/exec";
+
 let inventory = [];
 let dataLoaded = false;
 
 const statusDiv = document.getElementById("status");
-const resultDiv = document.getElementById("result");
+const resultsDiv = document.getElementById("results");
 
 function loadInventory() {
   statusDiv.innerText = "Loading inventory…";
@@ -103,9 +104,10 @@ function loadInventory() {
     .then(res => res.json())
     .then(data => {
       inventory = (data || []).map(p => ({
-  ...p,
-  sku: p.sku ? p.sku.toString().trim().toUpperCase() : ""
-}));
+        sku: p.sku ? p.sku.toString().trim().toUpperCase() : "",
+        qty: p.qty || 0,
+        loc: p.loc || ""
+      }));
 
       dataLoaded = true;
       statusDiv.innerText = `Inventory loaded (${inventory.length} parts)`;
@@ -119,49 +121,65 @@ function loadInventory() {
 loadInventory();
 
 function searchPart() {
-  const resultsDiv = document.getElementById("results");
-
   if (!dataLoaded) {
     statusDiv.innerText = "Please wait, inventory still loading…";
     return;
   }
 
-  const val = document.getElementById("search").value.trim().toUpperCase();
-  resultDiv.innerHTML = "";
+  const query = document.getElementById("search").value.trim().toUpperCase();
+  resultsDiv.innerHTML = "";
 
-  if (val.length < 2) return;
+  if (query.length < 2) return;
 
-  const matches = inventory.filter(p =>
-    p.sku && p.sku.toUpperCase().includes(val)
-  );
+  const results = inventory.filter(p => p.sku.includes(query));
 
-  if (matches.length === 0) {
-    resultDiv.innerHTML = "<p>No part found</p>";
+  if (results.length === 0) {
+    resultsDiv.innerHTML = "<p>No part found</p>";
     return;
   }
 
   resultsDiv.innerHTML = results.map((p, i) => `
-  <div class="card">
-    <b>SKU:</b> ${p.sku}<br><br>
+    <div class="card">
+      <b>SKU:</b> ${p.sku}<br><br>
 
-    <b>Quantity:</b>
-    <input type="number" id="qty-${i}" value="${p.qty}" style="width:80px"><br><br>
+      <b>Quantity:</b>
+      <input type="number" id="qty-${i}" value="${p.qty}"><br><br>
 
-    <b>Location:</b>
-    <input type="text" id="loc-${i}" value="${p.loc}" style="width:120px"><br><br>
+      <b>Location:</b>
+      <input type="text" id="loc-${i}" value="${p.loc}"><br><br>
 
-    <button onclick="savePart('${p.sku}', ${i})">
-      Save
-    </button>
-  </div>
-`).join("");
+      <button onclick="savePart('${p.sku}', ${i})">Save</button>
+    </div>
+  `).join("");
+}
 
+function savePart(sku, i) {
+  const qty = Number(document.getElementById(`qty-${i}`).value);
+  const loc = document.getElementById(`loc-${i}`).value.trim();
+  const operator = document.getElementById("operator").value;
+
+  fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sku: sku,
+      qty: qty,
+      loc: loc,
+      operator: operator
+    })
+  })
+  .then(res => res.json())
+  .then(() => {
+    alert("Updated successfully");
+    loadInventory();
+  })
+  .catch(() => alert("Update failed"));
 }
 
 function updatePart() {
-  const sku = document.getElementById("sku").value.trim();
-  const qty = Number(document.getElementById("qty").value);
-  const loc = document.getElementById("loc").value.trim();
+  const sku = document.getElementById("newSku").value.trim().toUpperCase();
+  const qty = Number(document.getElementById("newQty").value);
+  const loc = document.getElementById("newLoc").value.trim();
   const operator = document.getElementById("operator").value;
 
   if (!sku || isNaN(qty)) {
@@ -171,43 +189,26 @@ function updatePart() {
 
   fetch(API_URL, {
     method: "POST",
-    body: JSON.stringify({
-      action: "update",
-      sku: sku,
-      delta: qty,
-      loc: loc,
-      operator: operator
-    })
-  })
-  .then(r => r.json())
-  .then(res => {
-    alert(res.success ? "Updated successfully" : res.error);
-    loadInventory(); // refresh data
-  });
-}
-  function savePart(sku, i) {
-  const qty = document.getElementById(`qty-${i}`).value;
-  const loc = document.getElementById(`loc-${i}`).value;
-
-  fetch(API_URL, {
-    method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       sku: sku,
       qty: qty,
       loc: loc,
-      operator: "A"
+      operator: operator
     })
   })
   .then(res => res.json())
-  .then(() => alert("Updated successfully"))
-  .catch(() => alert("Update failed"));
+  .then(() => {
+    alert("Saved successfully");
+    loadInventory();
+  })
+  .catch(() => alert("Save failed"));
 }
-
 </script>
 
 </body>
 </html>
+
 
 
 
