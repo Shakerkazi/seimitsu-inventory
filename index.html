@@ -157,11 +157,15 @@ function updatePart(sku, i) {
       operator
     })
   })
-  .then(r => r.json())
-  .then(() => {
-    alert("Updated");
+.then(res => {
+  if (res.success) {
+    alert("Updated successfully");
     loadInventory();
-  });
+  } else {
+    alert("Update failed: " + res.error);
+  }
+});
+
 }
 
 function addPart() {
@@ -198,6 +202,7 @@ function addPart() {
 
 </body>
 </html>
+
 
 
 
