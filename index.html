@@ -158,17 +158,34 @@ function savePart(sku, i) {
   const loc = document.getElementById(`loc-${i}`).value.trim();
   const operator = document.getElementById("operator").value;
 
+ function savePart(sku, i) {
+  const qty = document.getElementById(`qty-${i}`).value;
+  const loc = document.getElementById(`loc-${i}`).value;
+  const operator = document.getElementById("operator").value;
+
+  const payload = {
+    action: "update",
+    sku: sku,
+    qty: qty,
+    loc: loc,
+    operator: operator
+  };
+
   fetch(API_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      action: "update",
-      sku: sku,
-      delta: qty,
-      loc: loc,
-      operator: operator
-    })
+    body: JSON.stringify(payload) // NO headers
   })
+  .then(res => res.json())
+  .then(() => {
+    alert("Updated successfully");
+    loadInventory();
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Update failed");
+  });
+}
+
   .then(res => res.json())
   .then(res => {
     if (res.success) {
@@ -187,6 +204,7 @@ function savePart(sku, i) {
 
 </body>
 </html>
+
 
 
 
