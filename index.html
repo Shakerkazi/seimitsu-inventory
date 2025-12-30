@@ -162,52 +162,32 @@ function savePart(sku, i) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
+      action: "update",
       sku: sku,
-      qty: qty,
+      delta: qty,
       loc: loc,
       operator: operator
     })
   })
   .then(res => res.json())
-  .then(() => {
-    alert("Updated successfully");
-    loadInventory();
+  .then(res => {
+    if (res.success) {
+      alert("Updated successfully");
+      loadInventory();
+    } else {
+      alert("Update failed: " + res.error);
+    }
   })
-  .catch(() => alert("Update failed"));
-}
-
-function updatePart() {
-  const sku = document.getElementById("newSku").value.trim().toUpperCase();
-  const qty = Number(document.getElementById("newQty").value);
-  const loc = document.getElementById("newLoc").value.trim();
-  const operator = document.getElementById("operator").value;
-
-  if (!sku || isNaN(qty)) {
-    alert("SKU and Quantity are required");
-    return;
-  }
-
-  fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      sku: sku,
-      qty: qty,
-      loc: loc,
-      operator: operator
-    })
-  })
-  .then(res => res.json())
-  .then(() => {
-    alert("Saved successfully");
-    loadInventory();
-  })
-  .catch(() => alert("Save failed"));
+  .catch(err => {
+    console.error(err);
+    alert("Update failed");
+  });
 }
 </script>
 
 </body>
 </html>
+
 
 
 
