@@ -69,6 +69,15 @@ footer {
   <div id="status">Loading inventory…</div>
   <div id="results"></div>
 
+  <!-- ADD / UPDATE PART -->
+  <div class="card">
+    <h3>Add New Part</h3>
+    <input id="newSku" placeholder="SKU-Item Code">
+    <input id="newQty" type="number" placeholder="Quantity">
+    <input id="newLoc" placeholder="Location">
+    <button onclick="addPart()">Add Part</button>
+  </div>
+
 </div>
 
 <footer>
@@ -76,10 +85,10 @@ footer {
 </footer>
 
 <script>
-const API_URL = "PASTE_NEW_DEPLOYMENT_URL_HERE";
+const API_URL = "https://script.google.com/macros/s/AKfycbxaCRMPIJTeyArUGJfcyk4PJCJMgnFORd6Xy0G3TkVwwrkdGjXefEYjMtur3WakKsq5/exec";
 
 let inventory = [];
-let dataLoaded = false;
+let loaded = false;
 
 const statusDiv = document.getElementById("status");
 const resultsDiv = document.getElementById("results");
@@ -93,7 +102,7 @@ function loadInventory() {
         qty: p.qty,
         loc: p.loc
       }));
-      dataLoaded = true;
+      loaded = true;
       statusDiv.innerText = `Inventory loaded (${inventory.length} parts)`;
     })
     .catch(err => {
@@ -105,7 +114,7 @@ function loadInventory() {
 loadInventory();
 
 function searchPart() {
-  if (!dataLoaded) return;
+  if (!loaded) return;
 
   const q = document.getElementById("search").value.toUpperCase().trim();
   resultsDiv.innerHTML = "";
@@ -128,12 +137,12 @@ function searchPart() {
       <b>Location:</b>
       <input type="text" id="loc-${i}" value="${p.loc}"><br><br>
 
-      <button onclick="savePart('${p.sku}', ${i})">Save</button>
+      <button onclick="updatePart('${p.sku}', ${i})">Save</button>
     </div>
   `).join("");
 }
 
-function savePart(sku, i) {
+function updatePart(sku, i) {
   const qty = document.getElementById(`qty-${i}`).value;
   const loc = document.getElementById(`loc-${i}`).value;
   const operator = document.getElementById("operator").value;
@@ -150,14 +159,46 @@ function savePart(sku, i) {
   })
   .then(r => r.json())
   .then(() => {
-    alert("Updated successfully");
+    alert("Updated");
     loadInventory();
+  });
+}
+
+function addPart() {
+  const sku = document.getElementById("newSku").value.trim().toUpperCase();
+  const qty = document.getElementById("newQty").value;
+  const loc = document.getElementById("newLoc").value;
+  const operator = document.getElementById("operator").value;
+
+  if (!sku || qty === "") {
+    alert("SKU and quantity required");
+    return;
+  }
+
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "add",
+      sku,
+      qty,
+      loc,
+      operator
+    })
   })
-  .catch(() => alert("Update failed"));
+  .then(r => r.json())
+  .then(res => {
+    if (res.error) alert(res.error);
+    else {
+      alert("Part added");
+      loadInventory();
+    }
+  });
 }
 </script>
 
 </body>
 </html>
+
+
 
 
