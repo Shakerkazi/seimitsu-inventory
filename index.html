@@ -85,7 +85,7 @@ footer {
 </footer>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxaCRMPIJTeyArUGJfcyk4PJCJMgnFORd6Xy0G3TkVwwrkdGjXefEYjMtur3WakKsq5/exec";
+const API_URL = "YOUR_NEW_DEPLOYED_WEB_APP_URL_HERE";  // Always update this after each deployment
 
 let inventory = [];
 let loaded = false;
@@ -94,6 +94,7 @@ const statusDiv = document.getElementById("status");
 const resultsDiv = document.getElementById("results");
 
 function loadInventory() {
+  statusDiv.innerText = "Loading inventory…";
   fetch(API_URL)
     .then(r => r.json())
     .then(data => {
@@ -106,7 +107,7 @@ function loadInventory() {
       statusDiv.innerText = `Inventory loaded (${inventory.length} parts)`;
     })
     .catch(err => {
-      console.error(err);
+      console.error("GET error:", err);
       statusDiv.innerText = "Failed to load inventory";
     });
 }
@@ -147,25 +148,32 @@ function updatePart(sku, i) {
   const loc = document.getElementById(`loc-${i}`).value;
   const operator = document.getElementById("operator").value;
 
+  const payload = {
+    action: "update",
+    sku,
+    qty,
+    loc,
+    operator
+  };
+
   fetch(API_URL, {
     method: "POST",
-    body: JSON.stringify({
-      action: "update",
-      sku,
-      qty,
-      loc,
-      operator
-    })
+    body: JSON.stringify(payload)   // IMPORTANT: no headers
   })
-.then(res => {
-  if (res.success) {
-    alert("Updated successfully");
-    loadInventory();
-  } else {
-    alert("Update failed: " + res.error);
-  }
-});
-
+  .then(r => r.json())
+  .then(res => {
+    console.log("Update response:", res);
+    if (res.success) {
+      alert("Updated successfully");
+      loadInventory();
+    } else {
+      alert("Update failed: " + (res.error || "Unknown error"));
+    }
+  })
+  .catch(err => {
+    console.error("Update error:", err);
+    alert("Update error: " + err);
+  });
 }
 
 function addPart() {
@@ -179,29 +187,42 @@ function addPart() {
     return;
   }
 
+  const payload = {
+    action: "add",
+    sku,
+    qty,
+    loc,
+    operator
+  };
+
   fetch(API_URL, {
     method: "POST",
-    body: JSON.stringify({
-      action: "add",
-      sku,
-      qty,
-      loc,
-      operator
-    })
+    body: JSON.stringify(payload)
   })
   .then(r => r.json())
   .then(res => {
-    if (res.error) alert(res.error);
-    else {
+    console.log("Add response:", res);
+    if (res.success) {
       alert("Part added");
+      // Clear form
+      document.getElementById("newSku").value = "";
+      document.getElementById("newQty").value = "";
+      document.getElementById("newLoc").value = "";
       loadInventory();
+    } else {
+      alert("Add failed: " + (res.error || "Unknown error"));
     }
+  })
+  .catch(err => {
+    console.error("Add error:", err);
+    alert("Add error: " + err);
   });
 }
 </script>
 
 </body>
 </html>
+
 
 
 
